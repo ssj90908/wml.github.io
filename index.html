@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta content="black" name="apple-mobile-web-app-status-bar-style">
+<title>群聊加入</title>
+<style>
+  body { margin: 0; padding: 0; overflow: hidden; }
+  
+  /* 加载动画 */
+  .loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    z-index: 9999;
+  }
+  .loader-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  .loader-text {
+    font-size: 16px;
+    color: #666;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    text-align: center;
+  }
+  .loader-nums {
+    display: inline-flex;
+    align-items: center;
+    color: #3498db;
+  }
+  .loader-num {
+    visibility: hidden;
+    opacity: 0;
+    animation: num-cycle 2s step-end infinite;
+  }
+  .loader-num:nth-child(1) { animation-delay: 0s; }
+  .loader-num:nth-child(2) { animation-delay: 0.3s; }
+  .loader-num:nth-child(3) { animation-delay: 0.6s; }
+  .loader-num:nth-child(4) { animation-delay: 0.9s; }
+
+  /* iOS 指引遮罩 */
+  .ios-guide-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .ios-guide-arrow {
+    width: 60px;
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    animation: bounce 1s infinite;
+  }
+  .ios-guide-text {
+    color: #fff;
+    font-size: 18px;
+    margin-top: 50px;
+    line-height: 1.6;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .ios-guide-text .highlight {
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 20px;
+  }
+  .ios-guide-btn {
+    margin-top: 30px;
+    background: #07C160;
+    color: #fff;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* iframe 容器 */
+  .content {
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+  }
+
+  /* 动画 */
+  @keyframes num-cycle {
+    0% { visibility: hidden; opacity: 0; }
+    1% { visibility: visible; opacity: 1; }
+    70% { visibility: visible; opacity: 1; }
+    71% { visibility: hidden; opacity: 0; }
+    100% { visibility: hidden; opacity: 0; }
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(10px); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 加载动画 -->
+  <div class="loader" id="pageLoader">
+    <div class="loader-group">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">
+        群聊加入中
+        <div class="loader-nums">
+          <span class="loader-num">.</span>
+          <span class="loader-num">.</span>
+          <span class="loader-num">.</span>
+          <span class="loader-num">.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 目标链接
+    const targetUrl = 'https://a.6611.fun/group.php/index/share/id/145/t/39cf80539ff482c6c118d1bb7a4b2e2b/time/1773337246.html';
+
+    // 环境检测
+    const UA = navigator.userAgent;
+    const isAndroid = /android|adr/i.test(UA);
+    const isIOS = /iphone|ipod|ipad/i.test(UA);
+    const isWeixin = /MicroMessenger/i.test(UA);
+
+    console.log('环境检测:', { isAndroid, isIOS, isWeixin });
+
+    // 主逻辑
+    function init() {
+      if (isWeixin) {
+        // 在微信环境内
+        if (isAndroid) {
+          // 安卓微信：用iframe加载
+          console.log('安卓微信 -> iframe加载');
+          loadIframe();
+        } else if (isIOS) {
+          // iOS微信：显示指引遮罩
+          console.log('iOS微信 -> 显示指引遮罩');
+          showIosGuide();
+        } else {
+          // 其他微信环境（如Windows微信）
+          console.log('其他微信环境 -> 直接跳转');
+          directRedirect();
+        }
+      } else {
+        // 不在微信环境（Safari、Chrome等普通浏览器）
+        console.log('非微信环境 -> 直接跳转');
+        directRedirect();
+      }
+    }
+
+    // 方法1：显示iOS指引遮罩
+    function showIosGuide() {
+      document.getElementById('pageLoader').style.display = 'none';
+      
+      const mask = document.createElement('div');
+      mask.className = 'ios-guide-mask';
+      mask.innerHTML = `
+        <img class="ios-guide-arrow" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgNjAgMTAwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMzAgMTBMMzAgNzAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0xNSA1NUwzMCA3MEw0NSA1NSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+" alt="箭头">
+        <div class="ios-guide-text">
+          苹果系统限制<br><br>
+          请点击右上角 <span class="highlight">【...】</span><br>
+          选择 <span class="highlight">【在Safari中打开】</span>
+        </div>
+        <button class="ios-guide-btn" id="knowBtn">我知道了</button>
+      `;
+      document.body.appendChild(mask);
+      
+      document.getElementById('knowBtn').onclick = function() {
+        mask.style.display = 'none';
+      };
+    }
+
+    // 方法2：iframe加载（安卓微信用）
+    function loadIframe() {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'content';
+      iframe.src = targetUrl;
+      iframe.frameBorder = '0';
+      iframe.scrolling = 'auto';
+      
+      iframe.onload = function() {
+        document.getElementById('pageLoader').style.display = 'none';
+        iframe.style.display = 'block';
+      };
+      
+      iframe.onerror = function() {
+        document.getElementById('pageLoader').style.display = 'none';
+        alert('内容加载失败，请检查网络');
+      };
+      
+      document.body.appendChild(iframe);
+      
+      // 超时兜底：5秒后如果还没加载成功，也隐藏loading
+      setTimeout(function() {
+        const loader = document.getElementById('pageLoader');
+        if (loader && loader.style.display !== 'none') {
+          loader.style.display = 'none';
+        }
+      }, 5000);
+    }
+
+    // 方法3：直接跳转（Safari等浏览器用）
+    function directRedirect() {
+      // 添加短暂延迟，让页面先渲染一下
+      setTimeout(function() {
+        window.location.href = targetUrl;
+      }, 100);
+    }
+
+    // 执行主逻辑
+    init();
+  </script>
+</body>
+</html>
